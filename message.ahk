@@ -1,4 +1,4 @@
-AppVersion := "1.0"
+AppVersion := "1.1"
 
 
 HelpMessage =
@@ -6,6 +6,8 @@ HelpMessage =
 This program "activates" and "deactivates" folders within the "chara" folder by moving the cards in and out. It allows you to group cards into a folder to tidy things up.
 
 Due to the *possibly* destructive nature of its action, please backup your card before trying this out. I tried to test all possible scenarios, but I might miss out some.
+
+Also, please try *not* to rename or delete the activated folder. This program attempts to remember what was the last activated folder, but it does not know when any changes were done to the folder.
 
 
 == Scanning A Folder ==
@@ -43,7 +45,7 @@ Idea by Flashk1ll @ http://flashk1llhoneyselect.blogspot.com/
 Icon image modified @ https://morguefile.com/p/848961
 Source code @ https://github.com/altbdoor/ahk-hs-chara
 
-WTFPL License
+Licensed under WTFPL
 
 Come join us on Discord @ https://discord.gg/xw8mHsE
 

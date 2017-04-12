@@ -51,7 +51,7 @@ GUI:
 	Gui, Add, Edit, x10 y30 w440 h240 -E0x200 ReadOnly VScroll, %AboutMessage%
 	
 	Gui, Margin, 0, 0
-	Gui, Show, Center w460, AHK HS Chara %AppVersion%
+	Gui, Show, Center w460, AHK HS Chara v%AppVersion%
 	
 	If (SavedInfoValue == 1) {
 		Gosub, ScanCharaFolder
@@ -95,8 +95,39 @@ ScanCharaFolder:
 		If (Temp["Index"] != -1) {
 			GuiControl, Choose, FolderChoice, % Temp["Index"]
 		}
+		Else If (Temp["Index"] == -1 && ActiveFolderValue != UnsortedFolderName) {
+			MsgBox, 0x30, Error, The active folder ("%ActiveFolderValue%") has been renamed or deleted! Please proceed with caution!
+			WriteSettings("settings", "activefolder", UnsortedFolderName)
+			GuiControl, , ActiveFolder, No folder activated
+			ActiveFolderValue := UnsortedFolderName
+		}
 	}
 Return
+
+MoveFolderContent(CharaFolder, OldActivatedFolder, NewActivatedFolder) {
+	global UnsortedFolderName, ActiveFolderValue
+	
+	If (!FileExist(CharaFolder . "\" . OldActivatedFolder) || !FileExist(CharaFolder . "\" . NewActivatedFolder)) {
+		MsgBox, 0x30, Error, Directory structure has changed! Please rescan the folder.
+	}
+	Else {
+		FileMove, %CharaFolder%\*.png, %CharaFolder%\%OldActivatedFolder%
+		FileMove, %CharaFolder%\*.txt, %CharaFolder%\%OldActivatedFolder%
+		
+		FileMove, %CharaFolder%\%NewActivatedFolder%\*.png, %CharaFolder%
+		FileMove, %CharaFolder%\%NewActivatedFolder%\*.txt, %CharaFolder%
+		
+		WriteSettings("settings", "activefolder", NewActivatedFolder)
+		If (NewActivatedFolder == UnsortedFolderName) {
+			GuiControl, , ActiveFolder, No folder activated
+		}
+		Else {
+			GuiControl, , ActiveFolder, %NewActivatedFolder%
+		}
+		
+		ActiveFolderValue := NewActivatedFolder
+	}
+}
 
 ActivateFolder:
 	Gui, Submit, NoHide
@@ -104,32 +135,21 @@ ActivateFolder:
 		MsgBox, 0x30, Error, Please select a folder to activate!
 	}
 	Else If (ActiveFolderValue != FolderChoice) {
-		FileMove, %CharaFolder%\*.png, %CharaFolder%\%ActiveFolderValue%
-		FileMove, %CharaFolder%\*.txt, %CharaFolder%\%ActiveFolderValue%
-		
-		FileMove, %CharaFolder%\%FolderChoice%\*.png, %CharaFolder%
-		FileMove, %CharaFolder%\%FolderChoice%\*.txt, %CharaFolder%
-		
-		WriteSettings("settings", "activefolder", FolderChoice)
-		GuiControl, , ActiveFolder, %FolderChoice%
-		ActiveFolderValue := FolderChoice
+		MoveFolderContent(CharaFolder, ActiveFolderValue, FolderChoice)
 	}
 Return
 
 RevertFolder:
 	Gui, Submit, NoHide
-	FileMove, %CharaFolder%\*.png, %CharaFolder%\%ActiveFolderValue%
-	FileMove, %CharaFolder%\*.png.bonemod.txt, %CharaFolder%\%ActiveFolderValue%
-	
-	FileMove, %CharaFolder%\%UnsortedFolderName%\*.png, %CharaFolder%
-	FileMove, %CharaFolder%\%UnsortedFolderName%\*.png.bonemod.txt, %CharaFolder%
-	
-	WriteSettings("settings", "activefolder", UnsortedFolderName)
-	GuiControl, , ActiveFolder, No folder activated
-	ActiveFolderValue := UnsortedFolderName
+	If (ActiveFolderValue != UnsortedFolderName) {
+		MoveFolderContent(CharaFolder, ActiveFolderValue, UnsortedFolderName)
+	}
+	Else {
+		MsgBox, 0x30, Error, There is nothing to revert!
+	}
 Return
 
-; F11::Reload
+F11::Reload
 
 GuiClose:
 	ExitApp
